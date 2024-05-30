@@ -1,0 +1,24 @@
+name = "expense-tracker-backend"
+compatibility_date = "2023-12-01"
+
+[vars]
+DATABASE_URL="prisma://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoiYTc4MzM5ZjctODI3NS00YzJhLWI0N2ItZDA5ZGQ1OWY5YTM1IiwidGVuYW50X2lkIjoiMTI1OGI4ODkyMzA4NmZkMWQ5MmJmNTdjZDY1ZTdlY2U5YTdmNTFhYWJjYzNkOTRkMTlkZDBmMDkzNDliNDdlNCIsImludGVybmFsX3NlY3JldCI6ImIxOGExOWU2LTEzZGYtNDY4Yi05NWNjLWJkYTYxZDI5ZmU2MCJ9.E_Fn9WrRpP0fHOWbV2yxEhqyQHv39_UmIcFfEK2xo5I"
+JWT_SECRET="123"
+DIRECT_URL="postgres://postgres.gecxygzokifnovehdgyo:8Q7VSfLwi+iu@J(@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres"
+
+
+# [[kv_namespaces]]
+# binding = "MY_KV_NAMESPACE"
+# id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# [[r2_buckets]]
+# binding = "MY_BUCKET"
+# bucket_name = "my-bucket"
+
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "my-database"
+# database_id = ""
+
+# [ai]
+# binding = "AI"
