@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { PrismaClient } from "@prisma/client/edge";
+import { Prisma, PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
 
 export const expenseRoutes = new Hono<{
@@ -48,6 +48,7 @@ expenseRoutes.post('/', async (c) => {
 });
 
 expenseRoutes.put('/:id', async (c) => {
+
     try{
         const prisma = new PrismaClient({
             datasourceUrl: c.env.DATABASE_URL
@@ -80,8 +81,66 @@ expenseRoutes.put('/:id', async (c) => {
     }
 });
 
-expenseRoutes.get('/bulk', async (c) => {});
+expenseRoutes.get('/bulk', async (c) => {
+    try{
+        const prisma = new PrismaClient({
+            datasourceUrl: c.env.DATABASE_URL
+        }).$extends(withAccelerate());
 
-expenseRoutes.get('/:id', async (c) => {});
+        const expenses = await prisma.expense.findMany({});
 
-expenseRoutes.delete('/:id', async (c) => {});
+        return c.json({
+            "Data": expenses
+        })
+    } catch(e){
+        return c.json({e});
+    }
+});
+
+expenseRoutes.get('/:id', async (c) => {
+    try{
+        const prisma = new PrismaClient({
+            datasourceUrl: c.env.DATABASE_URL
+        }).$extends(withAccelerate());
+
+        const expenseId = c.req.param('id');
+        const userId = c.get('userId')
+        const expense = await prisma.expense.findUnique({
+            where:{
+                id: expenseId,
+                userId: userId
+            }
+        });
+        
+        return c.json({
+            "Data": expense
+        });
+    } catch(e) {
+        return c.json({e});
+    }
+
+});
+
+expenseRoutes.delete('/:id', async (c) => {
+    try{
+        const prisma = new PrismaClient({
+            datasourceUrl: c.env.DATABASE_URL
+        }).$extends(withAccelerate());
+
+        const userId = c.get('userId');
+        const id = c.req.param('id');
+
+        await prisma.expense.delete({
+            where: {
+                id: id,
+                userId: userId
+            }
+        });
+
+        return c.json({
+            "Message": "Record Deleted"
+        });
+    } catch(e){
+        return c.json({e});
+    }
+});
