@@ -49,32 +49,31 @@ expenseRoutes.post('/', async (c) => {
 
 expenseRoutes.put('/:id', async (c) => {
     try{
+        const prisma = new PrismaClient({
+            datasourceUrl: c.env.DATABASE_URL
+        }).$extends(withAccelerate());
 
-    const prisma = new PrismaClient({
-        datasourceUrl: c.env.DATABASE_URL
-    }).$extends(withAccelerate());
+        const expenseId = c.req.param('id');
+        const userId = c.get("userId");
+        const payload = await c.req.json();
 
-    const expenseId = c.req.param('id');
-    const userId = c.get("userId");
-    const payload = await c.req.json();
+        prisma.expense.update({
+            where: {
+                userId:userId,
+                id: expenseId
+            },
+            data: {
+                name: payload.name,
+                amount: payload.amount
+            }
+        });
 
-    prisma.expense.update({
-        where: {
-            userId:userId,
-            id: expenseId
-        },
-        data: {
-            name: payload.name,
-            amount: payload.amount
-        }
-    });
-
-    return c.json({
-        "Message": "Expense updated",
-        data: {
-            payload
-        }
-    });
+        return c.json({
+            "Message": "Expense updated",
+            data: {
+                payload
+            }
+        });
 
     } catch(e){
         return c.json({e});
