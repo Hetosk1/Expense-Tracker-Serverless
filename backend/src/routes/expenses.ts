@@ -86,8 +86,14 @@ expenseRoutes.get('/bulk', async (c) => {
         const prisma = new PrismaClient({
             datasourceUrl: c.env.DATABASE_URL
         }).$extends(withAccelerate());
+        
+        const userId = c.get('userId');
 
-        const expenses = await prisma.expense.findMany({});
+        const expenses = await prisma.expense.findMany({
+            where: {
+                userId: userId
+            }
+        });
 
         return c.json({
             "Data": expenses

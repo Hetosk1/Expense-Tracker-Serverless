@@ -1,6 +1,21 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { NoAuth } from "./noAuth";
 
+interface DataItem {
+  id: string,
+  name: string,
+  amount: number,
+  userId: string
+};
+
 export const Dashboard = (): React.ReactNode => {
+  const [data, setData] = useState<DataItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [totalExpense, setTotalExpense] = useState<number>(0);
+  const [expenseName, setExpenseName] = useState<string>('');
+  const [expenseAmount, setExpenseAmount] = useState<number>(0);
+
   const isVerified = (): boolean => {
     const token = localStorage.getItem('token-expense-tracker');
     if(!token){
@@ -8,10 +23,74 @@ export const Dashboard = (): React.ReactNode => {
     }
     return true;
   };
+
+  useEffect(() => {
+    console.log('kem chod');
+    const fetchData = async () => { 
+      try{
+        setLoading(true);
+        const response = await axios.get('http://127.0.0.1:8787/expense/bulk',{
+          headers: {
+            Authorization: `bearer ${localStorage.getItem('token-expense-tracker')}`
+          }
+        });
+
+        setData(response.data.Data);
+        console.log(data);
+        setLoading(false);
+      } catch(e){
+        console.log(`Error : ${e}`);
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    let total = 0;
+    if (isVerified()){
+      for (let i of data) total += i.amount;
+    }
+    setTotalExpense(total);
+  }, [data]);
+
+
+
+  const addExpense = async (event: React.FormEvent) => {
+    event.preventDefault();
+    try{
+      const payload = {
+        name: expenseName,
+        amount: expenseAmount
+      }
+      console.log(payload);
+      const response = await fetch('http://127.0.0.1:8787/expense', {
+          method: 'POST',
+          headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `bearer ${localStorage.getItem('token-expense-tracker')}`
+          },
+          
+          body: JSON.stringify(payload),
+      });
+
+      if(response.status == 200){
+        console.log(response);
+        window.location.reload();
+      } else {
+        console.log(response)  
+        console.log('something went wrong')
+      }
+    } catch(e){
+      console.log(e);
+    }
+  };
+
+
   return (
     <>{isVerified() 
       ? 
-    
+
       <div className="flex flex-col h-full">
         <main className="flex-1 p-6 sm:p-8 md:p-10">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 md:gap-10">
@@ -21,15 +100,15 @@ export const Dashboard = (): React.ReactNode => {
               <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8 md:p-10">
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-6 md:mb-8">
                   <span className="text-gray-500 mb-2 sm:mb-0">Total Spent</span>
-                  <span className="text-2xl font-bold sm:text-3xl md:text-4xl">$2,345.67</span>
+                  <span className="text-2xl font-bold sm:text-3xl md:text-4xl">&#8377;{totalExpense.toString()}</span>
                 </div>
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-6 md:mb-8">
                   <span className="text-gray-500 mb-2 sm:mb-0">This Month</span>
-                  <span className="text-2xl font-bold sm:text-3xl md:text-4xl">$987.54</span>
+                  <span className="text-2xl font-bold sm:text-3xl md:text-4xl"></span>
                 </div>
                 <div className="flex flex-col sm:flex-row justify-between items-center">
                   <span className="text-gray-500 mb-2 sm:mb-0">Last Month</span>
-                  <span className="text-2xl font-bold sm:text-3xl md:text-4xl">$1,358.13</span>
+                  <span className="text-2xl font-bold sm:text-3xl md:text-4xl"></span>
                 </div>
               </div>
             </div>
@@ -37,7 +116,7 @@ export const Dashboard = (): React.ReactNode => {
             <div>
               <h2 className="text-xl font-bold mb-4 sm:text-2xl md:text-3xl">Add Expense</h2>
               <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8 md:p-10">
-                <form>
+                <form onSubmit={addExpense}>
                   <div className="mb-4 sm:mb-6 md:mb-8">
                     <label htmlFor="name" className="block text-gray-500 font-bold mb-2 sm:mb-3 md:mb-4">
                       Name
@@ -47,6 +126,9 @@ export const Dashboard = (): React.ReactNode => {
                       id="name"
                       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                       placeholder="Enter expense name"
+                      value={expenseName}
+                      required
+                      onChange={(e) => {setExpenseName(e.target.value)}}
                     />
                   </div>
                   <div className="mb-4 sm:mb-6 md:mb-8">
@@ -57,7 +139,10 @@ export const Dashboard = (): React.ReactNode => {
                       type="number"
                       id="amount"
                       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      required
                       placeholder="Enter expense amount"
+                      value={expenseAmount}
+                      onChange={(e) => {setExpenseAmount(parseInt(e.target.value))}}
                     />
                   </div>
                   {/* <div className="mb-4 sm:mb-6 md:mb-8">
@@ -149,43 +234,33 @@ export const Dashboard = (): React.ReactNode => {
             </div>
           </div> */}
 
-          <div className="mt-6 sm:mt-8 md:mt-10">
-            <h2 className="text-xl font-bold mb-4 sm:text-2xl md:text-3xl">Recent Transactions</h2>
-            <div className="bg-white rounded-lg shadow-lg">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-200">
-                    <th className="py-2 px-4 text-left sm:py-3 sm:px-6 md:py-4 md:px-8">Name</th>
-                    <th className="py-2 px-4 text-left sm:py-3 sm:px-6 md:py-4 md:px-8">Amount</th>
-                    <th className="py-2 px-4 text-left sm:py-3 sm:px-6 md:py-4 md:px-8">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  
-                  <tr>
-                    <td className="py-2 px-4 sm:py-3 sm:px-6 md:py-4 md:px-8">Groceries</td>
-                    <td className="py-2 px-4 sm:py-3 sm:px-6 md:py-4 md:px-8">$123.45</td>
-                    <td className="py-2 px-4 sm:py-3 sm:px-6 md:py-4 md:px-8">2023-04-15</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2 px-4 sm:py-3 sm:px-6 md:py-4 md:px-8">Rent</td>
-                    <td className="py-2 px-4 sm:py-3 sm:px-6 md:py-4 md:px-8">$1,200.00</td>
-                    <td className="py-2 px-4 sm:py-3 sm:px-6 md:py-4 md:px-8">2023-04-01</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2 px-4 sm:py-3 sm:px-6 md:py-4 md:px-8">Utilities</td>
-                    <td className="py-2 px-4 sm:py-3 sm:px-6 md:py-4 md:px-8">$87.65</td>
-                    <td className="py-2 px-4 sm:py-3 sm:px-6 md:py-4 md:px-8">2023-03-31</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2 px-4 sm:py-3 sm:px-6 md:py-4 md:px-8">Dining Out</td>
-                    <td className="py-2 px-4 sm:py-3 sm:px-6 md:py-4 md:px-8">$45.78</td>
-                    <td className="py-2 px-4 sm:py-3 sm:px-6 md:py-4 md:px-8">2023-03-25</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+          {loading == true ? <div>Loading...</div> : 
+                      <div className="mt-6 sm:mt-8 md:mt-10">
+                      <h2 className="text-xl font-bold mb-4 sm:text-2xl md:text-3xl">Recent Transactions</h2>
+                      <div className="bg-white rounded-lg shadow-lg">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="bg-gray-200">
+                              <th className="py-2 px-4 text-left sm:py-3 sm:px-6 md:py-4 md:px-8">Name</th>
+                              <th className="py-2 px-4 text-left sm:py-3 sm:px-6 md:py-4 md:px-8">Amount</th>
+                              {/* <th className="py-2 px-4 text-left sm:py-3 sm:px-6 md:py-4 md:px-8">Date</th> */}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {data.map(item => (
+                              <tr key={item.id}>
+                                <td className="py-2 px-4 sm:py-3 sm:px-6 md:py-4 md:px-8">{item.name}</td>
+                                <td className="py-2 px-4 sm:py-3 sm:px-6 md:py-4 md:px-8">&#8377;{item.amount}</td>
+                                {/* <td className="py-2 px-4 sm:py-3 sm:px-6 md:py-4 md:px-8">2023-03-25</td> */}
+                              </tr>
+                            ))
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+          }
+
 
         </main>
       </div>
@@ -193,6 +268,7 @@ export const Dashboard = (): React.ReactNode => {
       : 
 
         <NoAuth/>
+
       }
     </>
     )
