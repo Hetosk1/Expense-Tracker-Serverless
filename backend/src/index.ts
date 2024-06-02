@@ -5,6 +5,7 @@ import { PrismaClient } from '@prisma/client/edge';
 import { withAccelerate } from '@prisma/extension-accelerate';
 import { verify } from 'hono/jwt';
 import { Variables } from 'hono/types';
+import { cors } from 'hono/cors';
 
 const app = new Hono<{
   Bindings: {
@@ -13,6 +14,12 @@ const app = new Hono<{
   },
   Variables:Variables 
 }>();
+
+app.use('*', cors(
+  {
+    origin: '*',
+  }
+))
 
 app.use("/expense/*", async (c, next) => {
   try{
